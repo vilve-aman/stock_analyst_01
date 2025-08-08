@@ -1,0 +1,564 @@
+
+# define_stock_to_analyze:
+#   description: >
+#     Confirm the stock before proceeding.
+#     Analyze the {query} and extract company name from {query} 
+#     Search for the company name and extract stock symbol and other meta data about the company.
+#     Decide the stock to analyze from the search results.
+   
+#   expected_output: >
+#     Confirmed stock symbol and company metadata to analyze.
+#   agent: stock_researcher
+
+
+# gather_stock_data:
+#   description: >
+#     Gather the latest news, market trends, and financial data (current price, market cap, P/E ratio, competitors data) for the confirmed stock.
+#   expected_output: >
+#     Core financial data for the stock. And a gist of competitors data.
+#   agent: stock_researcher
+
+
+
+
+# research_task:
+#   description: >
+#     Conduct a thorough research about {topic}
+#     Make sure you find any interesting and relevant information given
+#     the current year is {current_year}.
+#   expected_output: >
+#     A list with 10 bullet points of the most relevant information about {topic}
+#   agent: researcher
+
+# reporting_task:
+#   description: >
+#     Review the context you got and expand each topic into a full section for a report.
+#     Make sure the report is detailed and contains any and all relevant information.
+#   expected_output: >
+#     A fully fledged report with the main topics, each with a full section of information.
+#     Formatted as markdown without '```'
+#   agent: reporting_analyst
+
+
+
+
+
+# perform_sentiment_analysis:
+#   description: >
+#     Analyze the sentiment of news articles, analyst reports, and social media to determine market sentiment (bullish, bearish, neutral) towards the stock.
+#   expected_output: >
+#     Sentiment report summarizing market opinion and reasoning.
+#   agent: sentiment_analyst
+
+# perform_quantitative_analysis:
+#   description: >
+#     Analyze financial statements and key metrics like EPS, P/E, PEG, D/E. Provide a recommendation on whether to trade and suggest a trading strategy.
+#   expected_output: >
+#     Quantitative financial analysis report with trade recommendation.
+#   agent: stock_qantitative_analyst
+
+# compile_final_report:
+#   description: >
+#     Summarize all findings from research, sentiment analysis, and quantitative evaluation into a cohesive investment insight report.
+#     Include a clear recommendation (buy/hold/sell) and key takeaway
+#   expected_output: >
+#     Final stock insight report with recommendation based on research, sentiment, and quantitative metrics.
+#   agent: stock_report_summariser
+#   depends_on: [perform_sentiment_analysis, perform_quantitative_analysis, gather_stock_data]
+#   expected_output: >
+#       Comprehensive summary report that includes:
+#       - Overview of the company and its stock
+#       - Sentiment summary (bullish/bearish/neutral)
+#       - Quantitative findings (metrics and analysis)
+#       - Final investment recommendation with justification
+#       - Identified risks and opportunities
+
+
+# ---------------------------------------------------------------------------------------------------------------------------------------
+
+
+# define_stock_to_analyze:
+#   description: >
+#     You are a precision stock identification specialist. Your task is to definitively identify the target security for analysis.
+    
+#     IDENTIFICATION PROCESS:
+#     1. Parse the query: "{query}" to extract company references
+#     2. Handle ambiguous cases (multiple companies, unclear references)
+
+    
+#     VALIDATION REQUIREMENTS:
+#     - Verify primary exchange listing
+#     - Identify primary business sector/industry
+    
+#     ERROR HANDLING:
+#     - If multiple matches exist, prioritize by most relevant to the query
+#     - If no clear match, or any potential confusion stop executing the task.
+    
+#   expected_output: >
+#     Provide a definitive stock identification including:
+    
+#     CONFIRMED SECURITY:
+#     - Stock Symbol: [TICKER]
+#     - Company Name: [Full Legal Name]
+#     - URL: [URL for searching more details about the stock]
+
+    
+#     VERIFICATION NOTES:
+#     - Confirmation method used
+#     - Any disambiguation performed
+
+#     CONFIDENCE LEVEL: [High/Medium/Low] with justification
+#   agent: stock_researcher
+
+
+define_stock_to_analyze:
+  description: >
+    Parse "{query}" to identify the target company. Verify it's publicly traded.
+    Handle ambiguous cases by prioritizing market cap and volume.
+    Cross-reference company name with official ticker symbols.
+  expected_output: >
+    Stock Symbol: [TICKER]
+    Company: [Full Name]
+    Exchange: [NYSE/NASDAQ]
+    Sector: [Industry]
+    Confidence: [High/Medium/Low] with justification
+  agent: stock_researcher
+
+
+
+gather_stock_data:
+  description: >
+    Collect comprehensive financial data for confirmed stock:
+    - Core metrics: price, market cap, P/E, revenue, EPS, debt/equity, ROE
+    - 3-5 competitors with comparative metrics
+    - Recent news (30 days) and upcoming earnings
+    Ensure all data is from last 12 months.
+  expected_output: >
+    ## Financial Snapshot
+    Current price, market cap, P/E ratios, revenue trends, key ratios
+    ## Competitive Position  
+    Main competitors and relative valuation metrics
+    ## Recent Developments
+    Key news, earnings results, upcoming catalysts
+  agent: stock_researcher
+
+
+
+perform_sentiment_analysis:
+  description: >
+    Analyze market sentiment from analyst reports, news coverage, and market behavior.
+    Assess analyst ratings, price targets, news tone, and trading patterns.
+    Distinguish between short-term noise and lasting sentiment shifts.
+  expected_output: >
+    ## Sentiment Verdict: [BULLISH/BEARISH/NEUTRAL]
+    ## Key Drivers: Top 3 sentiment factors with evidence
+    ## Analyst Activity: Rating changes and price target consensus
+    ## Market Signals: Volume patterns and options activity
+    ## Contrarian Opportunities: Sentiment vs fundamentals gaps
+    Confidence Score: [1-10] with reasoning
+  agent: sentiment_analyst
+
+perform_quantitative_analysis:
+  description: >
+    Conduct rigorous financial analysis using DCF/multiples valuation.
+    Assess financial health (liquidity, leverage, profitability trends).
+    Develop specific trading strategy with entry/exit points and risk parameters.
+  expected_output: >
+    ## Recommendation: [BUY/HOLD/SELL] - Price Target: $[amount]
+    ## Valuation: Intrinsic value vs current price analysis
+    ## Financial Health: Liquidity, leverage, profitability assessment  
+    ## Trading Strategy: Entry point, stop loss, profit targets, position size
+    ## Risk-Reward: Maximum risk %, expected return %, success probability
+    Confidence: [High/Medium/Low] with key factors
+  agent: stock_quantitative_analyst
+
+compile_final_report:
+  description: >
+    Synthesize all analysis into executive investment report. Weight quantitative analysis highest.
+    Resolve conflicting signals explicitly. Provide clear implementation guidance.
+  expected_output: >
+    # [Company] ([TICKER]) Investment Analysis
+    ## Executive Summary
+    **RECOMMENDATION: [BUY/HOLD/SELL]** | **TARGET: $[price]** | **HORIZON: [timeframe]**
+    ## Company Overview: Business model and market position
+    ## Analysis Summary: Quantitative foundation, sentiment context, key insights
+    ## Implementation: Entry strategy, risk management, profit targets
+    ## Risk Assessment: Downside protection and success probability
+    ## Scenarios: Bull/bear/base case outcomes
+    **Confidence: [High/Medium/Low]** | **Next Review: [date]**
+  agent: stock_report_summariser
+  depends_on: [perform_sentiment_analysis, perform_quantitative_analysis, gather_stock_data]
+
+# gather_stock_data:
+#   description: >
+#     You are a senior financial data analyst responsible for assembling a comprehensive data foundation for the confirmed stock analysis.
+    
+
+#     DATA COLLECTION FRAMEWORK:
+#     - Use the URL to get the stock details from screener.in
+#     - Use the URL to get the peers data from screener.in
+#     - Use the stock symbol, company name to get the news about the company
+
+#     Analyze the {stock_details} and extract the details in the following format:
+    
+
+    
+#     CORE FINANCIAL METRICS (Required):
+#     - Current stock price and day's performance
+#     - Market capitalization
+#     - Trading volume (average and recent)
+#     - P/E ratio (trailing and forward)
+#     - Revenue and earnings trends (last 4 quarters)
+#     - Return on equity (ROE)
+    
+#     MARKET POSITIONING:
+#     - Identify 3-5 direct competitors
+#     - Compare key metrics across peer group
+#     - Market share data (if available)
+#     - Industry growth trends
+    
+#     NEWS AND CATALYSTS:
+#     - Recent earnings announcements (last 2 quarters)
+#     - Significant news from past 30 days
+#     - Upcoming earnings date and analyst expectations
+#     - Major product launches or business developments
+    
+   
+#   expected_output: >
+#     Structured financial dataset formatted as follows:
+    
+#     Core Financial Snapshot
+#     - Stock Price: 
+#     - Market Cap: 
+#     - P/E Ratio: 
+#     - Revenue (TTM): 
+#     - EPS (TTM): 
+#     - Debt/Equity: 
+#     - ROE: 
+    
+#     ## Competitive Landscape
+#     - Primary Competitors: [List with brief positioning]
+#     - Relative Valuation: [How company compares on key metrics]
+#     - Market Position: [Leader/Challenger/Follower with context]
+    
+#     ## Recent Developments
+#     - Key News Items: [3-5 significant developments with dates]
+#     - Earnings Performance: [Recent results vs expectations]
+#     - Upcoming Catalysts: [Events that could move stock]
+    
+#     DATA CONFIDENCE: [Assessment of data completeness and reliability]
+#   agent: stock_researcher
+
+
+
+
+
+
+
+
+
+
+
+
+# research_task:
+#   description: >
+#     You are a senior research analyst tasked with conducting comprehensive research on {topic}.
+    
+#     CONTEXT: Current year is {current_year}. Focus on the most recent and relevant developments.
+    
+#     RESEARCH METHODOLOGY:
+#     1. Identify 3-5 primary research angles for {topic}
+#     2. Gather data from credible sources (financial reports, industry publications, news outlets)
+#     3. Cross-reference information to ensure accuracy
+#     4. Prioritize insights that could impact investment decisions
+#     5. Focus on actionable intelligence rather than general information
+    
+#     QUALITY CRITERIA:
+#     - Each insight should be specific, measurable, and recent
+#     - Include quantitative data where available
+#     - Verify information from multiple sources
+#     - Distinguish between facts and market speculation
+    
+#   expected_output: >
+#     Deliver exactly 10 research insights about {topic}, formatted as bullet points. Each insight must:
+#     - Begin with a clear, factual statement
+#     - Include specific data points, percentages, or timeframes when available
+#     - Cite the general source type (e.g., "according to recent financial filings," "industry reports indicate")
+#     - Highlight potential investment implications
+#     - Be unique and non-redundant
+    
+#     Format: • [Specific insight with quantitative data] - [Source context] - [Investment relevance]
+#   agent: researcher
+
+# reporting_task:
+#   description: >
+#     You are an expert financial report writer tasked with transforming research insights into a comprehensive analytical report.
+    
+#     TRANSFORMATION APPROACH:
+#     1. Group related insights into 3-5 thematic sections
+#     2. Expand each insight with detailed analysis and context
+#     3. Connect insights to broader market trends and implications
+#     4. Maintain logical flow between sections
+#     5. Ensure each section provides actionable intelligence
+    
+#     REPORT STRUCTURE REQUIREMENTS:
+#     - Executive Summary (2-3 sentences highlighting key themes)
+#     - Main sections with descriptive headers
+#     - Detailed analysis for each section (150-200 words minimum)
+#     - Clear connections between data points and market implications
+#     - Conclusion tying insights together
+    
+#     WRITING STANDARDS:
+#     - Professional, analytical tone
+#     - Specific data citations
+#     - Clear cause-and-effect relationships
+#     - Balanced perspective (opportunities and risks)
+    
+#   expected_output: >
+#     A comprehensive markdown-formatted analytical report without code blocks (```).
+    
+#     REQUIRED ELEMENTS:
+#     - Clear section headers using ## formatting
+#     - Detailed expansion of each research insight
+#     - Integration of related points into cohesive narratives
+#     - Quantitative data woven throughout the analysis
+#     - Professional executive summary and conclusion
+#     - 800-1200 word total length
+    
+#     QUALITY CHECKLIST:
+#     ✓ Each section provides actionable insights
+#     ✓ Data points support analytical conclusions
+#     ✓ Report flows logically from section to section
+#     ✓ Maintains focus on investment relevance
+#   agent: reporting_analyst
+
+# perform_sentiment_analysis:
+#   description: >
+#     You are a market sentiment specialist analyzing the collective mood and expectations surrounding the target stock.
+    
+#     SENTIMENT ANALYSIS FRAMEWORK:
+    
+#     SOURCE ANALYSIS:
+#     1. Professional analyst reports and ratings changes
+#     2. Financial news coverage tone and frequency
+#     3. Social media sentiment (general themes, not specific posts)
+#     4. Insider trading activity patterns
+#     5. Institutional investor movements
+    
+#     SENTIMENT INDICATORS:
+#     - Analyst rating distribution (buy/hold/sell ratios)
+#     - Price target consensus vs current price
+#     - News sentiment scoring (positive/negative/neutral)
+#     - Volume patterns during news events
+#     - Options activity (put/call ratios)
+    
+#     CONTEXTUAL FACTORS:
+#     - Sector-wide sentiment trends
+#     - Broader market conditions impact
+#     - Company-specific sentiment drivers
+#     - Historical sentiment patterns for this stock
+    
+#     ANALYTICAL RIGOR:
+#     - Quantify sentiment where possible
+#     - Distinguish between short-term noise and lasting sentiment shifts
+#     - Identify contrarian indicators
+#     - Weight institutional vs retail sentiment appropriately
+    
+#   expected_output: >
+#     Comprehensive sentiment analysis report structured as:
+    
+#     ## Overall Sentiment Assessment
+#     VERDICT: [BULLISH/BEARISH/NEUTRAL] with confidence level [High/Medium/Low]
+    
+#     ## Sentiment Breakdown by Source
+#     - Analyst Community: [Rating distribution and recent changes]
+#     - Financial Media: [Coverage tone and key themes]
+#     - Market Behavior: [Volume, options activity insights]
+#     - Institutional Activity: [Notable movements or positions]
+    
+#     ## Key Sentiment Drivers
+#     1. [Primary factor influencing sentiment with explanation]
+#     2. [Secondary factor with supporting evidence]
+#     3. [Third factor with market implications]
+    
+#     ## Sentiment vs Reality Check
+#     - Overvalued Optimism: [Areas where sentiment may exceed fundamentals]
+#     - Underappreciated Positives: [Strengths not reflected in sentiment]
+#     - Contrarian Opportunities: [Potential sentiment reversals]
+    
+#     ## Forward-Looking Sentiment Risks
+#     - Upside Catalysts: [Events that could improve sentiment]
+#     - Downside Risks: [Factors that could damage sentiment]
+    
+#     SENTIMENT RELIABILITY SCORE: [1-10 scale with justification]
+#   agent: sentiment_analyst
+
+# perform_quantitative_analysis:
+#   description: >
+#     You are a quantitative analyst conducting rigorous financial analysis to generate data-driven investment recommendations.
+    
+#     QUANTITATIVE ANALYSIS METHODOLOGY:
+    
+#     VALUATION ANALYSIS:
+#     1. Calculate intrinsic value using multiple methods (DCF, comparable multiples)
+#     2. Assess current price vs calculated fair value
+#     3. Identify key valuation drivers and sensitivities
+#     4. Compare valuation metrics to industry peers
+    
+#     FINANCIAL HEALTH ASSESSMENT:
+#     - Liquidity ratios (current, quick, cash)
+#     - Leverage analysis (debt ratios, interest coverage)
+#     - Profitability trends (margins, ROE, ROA)
+#     - Cash flow quality and sustainability
+    
+#     GROWTH ANALYSIS:
+#     - Revenue growth consistency and drivers
+#     - Earnings growth quality and sustainability
+#     - Market expansion opportunities
+#     - Competitive positioning strength
+    
+#     RISK EVALUATION:
+#     - Business model risks and dependencies
+#     - Financial risks (debt, cash flow volatility)
+#     - Market risks (competition, regulation)
+#     - Execution risks (management, strategy)
+    
+#     TRADING STRATEGY FRAMEWORK:
+#     - Entry/exit price targets with rationale
+#     - Position sizing recommendations
+#     - Risk management parameters
+#     - Time horizon considerations
+    
+#   expected_output: >
+#     Comprehensive quantitative analysis report with clear trading recommendation:
+    
+#     ## Executive Investment Thesis
+#     RECOMMENDATION: [BUY/HOLD/SELL] - [STRONG/MODERATE/WEAK]
+#     PRICE TARGET: $[target] (upside/downside of [%])
+#     TIME HORIZON: [Short/Medium/Long term]
+    
+#     ## Valuation Analysis
+#     - Intrinsic Value Estimate: $[amount] (method: [DCF/Multiples/Hybrid])
+#     - Current Price vs Fair Value: [Premium/Discount] of [%]
+#     - Key Valuation Drivers: [Top 3 factors affecting value]
+#     - Peer Comparison: [How stock values vs competitors]
+    
+#     ## Financial Strength Assessment
+#     - Liquidity Score: [Strong/Adequate/Weak] - [Key ratios]
+#     - Leverage Profile: [Conservative/Moderate/Aggressive] - [Debt metrics]
+#     - Profitability Trend: [Improving/Stable/Declining] - [Margin analysis]
+#     - Cash Generation: [Strong/Adequate/Weak] - [FCF analysis]
+    
+#     ## Growth Profile
+#     - Revenue Growth: [%] CAGR with [sustainability assessment]
+#     - Earnings Growth: [%] with [quality indicators]
+#     - Growth Drivers: [Top 3 catalysts for future growth]
+#     - Growth Risks: [Key threats to growth trajectory]
+    
+#     ## Recommended Trading Strategy
+#     - ENTRY POINT: $[price] or below
+#     - STOP LOSS: $[price] ([%] risk)
+#     - PROFIT TARGET 1: $[price] ([%] gain)
+#     - PROFIT TARGET 2: $[price] ([%] gain)
+#     - POSITION SIZE: [% of portfolio] based on [risk assessment]
+    
+#     ## Risk-Reward Analysis
+#     - Maximum Risk: [%] to stop loss
+#     - Expected Return: [%] to primary target
+#     - Risk-Reward Ratio: [ratio] ([favorable/unfavorable])
+#     - Probability of Success: [%] based on [analytical factors]
+    
+#     CONFIDENCE LEVEL: [High/Medium/Low] with [key supporting factors]
+#   agent: stock_quantitative_analyst
+
+# compile_final_report:
+#   description: >
+#     You are the lead investment strategist synthesizing all analytical inputs into a definitive investment recommendation report.
+    
+#     SYNTHESIS METHODOLOGY:
+#     1. Integrate findings from research, sentiment, and quantitative analysis
+#     2. Resolve any conflicting signals between different analytical approaches
+#     3. Weight different factors based on their reliability and relevance
+#     4. Generate balanced perspective incorporating both opportunities and risks
+#     5. Provide clear, actionable investment guidance
+    
+#     REPORT INTEGRATION PRIORITIES:
+#     - Quantitative analysis carries highest weight for recommendation
+#     - Sentiment analysis provides timing and positioning context
+#     - Research findings offer fundamental support and risk identification
+#     - All components must align in final recommendation logic
+    
+#     DECISION FRAMEWORK:
+#     - Strong quantitative + positive sentiment = Strong Buy/Buy
+#     - Strong quantitative + negative sentiment = Buy with caution
+#     - Weak quantitative + any sentiment = Hold/Sell consideration
+#     - Conflicting signals require explicit explanation and resolution
+    
+#     QUALITY STANDARDS:
+#     - Every recommendation must be supported by specific evidence
+#     - Risk factors must be explicitly acknowledged and quantified
+#     - Alternative scenarios should be briefly considered
+#     - Implementation guidance must be practical and specific
+    
+#   expected_output: >
+#     Executive-level investment report with the following structure:
+    
+#     # Stock Analysis Report: [Company Name] ([TICKER])
+    
+#     ## Executive Summary
+#     **INVESTMENT RECOMMENDATION: [BUY/HOLD/SELL] - [STRONG/MODERATE/WEAK]**
+#     **PRICE TARGET: $[amount] ([+/-]% from current price)**
+#     **INVESTMENT HORIZON: [timeframe]**
+    
+#     [2-3 sentence summary of key investment thesis and primary supporting factors]
+    
+#     ## Company Overview
+#     - Business Model: [Brief description of how company makes money]
+#     - Market Position: [Competitive standing and market share context]
+#     - Key Metrics: [Current price, market cap, P/E, and 2-3 other critical ratios]
+    
+#     ## Investment Analysis Summary
+    
+#     ### Quantitative Foundation
+#     - Valuation Assessment: [Fair value vs current price with method]
+#     - Financial Health: [Strength rating with key supporting metrics]
+#     - Growth Profile: [Growth rate and sustainability assessment]
+    
+#     ### Market Sentiment Context
+#     - Current Sentiment: [Bullish/Bearish/Neutral with confidence level]
+#     - Key Sentiment Drivers: [Top 2-3 factors influencing market opinion]
+#     - Sentiment vs Fundamentals: [Alignment or disconnect analysis]
+    
+#     ### Strategic Research Insights
+#     - Major Opportunities: [Top 2-3 positive catalysts or advantages]
+#     - Primary Risks: [Top 2-3 concerns or challenges]
+#     - Industry Context: [How broader sector trends affect this stock]
+    
+#     ## Final Investment Recommendation
+    
+#     ### Recommendation Rationale
+#     [Detailed paragraph explaining why this recommendation makes sense given all analytical inputs]
+    
+#     ### Implementation Strategy
+#     - **Entry Strategy**: [Specific price levels and timing considerations]
+#     - **Risk Management**: [Stop-loss levels and position sizing guidance]
+#     - **Profit Taking**: [Target prices and exit strategy]
+#     - **Monitoring**: [Key metrics and events to watch]
+    
+#     ### Risk Assessment
+#     - **Maximum Risk**: [Potential downside with stop-loss]
+#     - **Expected Return**: [Target upside with probability assessment]
+#     - **Key Risk Factors**: [Top 3 things that could derail thesis]
+    
+#     ## Alternative Scenarios
+#     - **Bull Case**: [What could drive outperformance]
+#     - **Bear Case**: [What could cause underperformance]
+#     - **Most Likely**: [Expected base case scenario]
+    
+#     ---
+#     **Analyst Confidence Level**: [High/Medium/Low]
+#     **Report Date**: [Current date]
+#     **Next Review**: [Recommended reassessment timing]
+  
+#   agent: stock_report_summariser
+  # depends_on: [perform_sentiment_analysis, perform_quantitative_analysis, gather_stock_data]
